@@ -1,7 +1,0 @@
-----------------------------
-Account Information
-----------------------------
-Username: [ Edward Kim ]
-Skypename: [ atomictoast5 ]
-City & country: [ Walterboro ] , [ US ]
-About: [  ]

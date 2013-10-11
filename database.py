@@ -1,39 +1,39 @@
 import sqlite3
-
-ChatCacheDictionary = {} #caching chatnames once found for easy access
-
-def ConnecttoDB(dbfile):
+from re import sub 
+ 
+def MakeConnection(dbfile,command): 
     connection = sqlite3.connect(dbfile)
-    return connection.cursor()
+    cursor = connection.cursor()
+    return cursor.execute(command) #returns the sqlite3 cursor after the execution of the sqlite command 
+
+ChatCacheDictionary = {} #once friendly chat name is found, it is cached in this dictionary so further database connections are not necessary
 
 def GetChatName(Chatname,dbfile):
 
     if Chatname not in ChatCacheDictionary.keys():
-        dbcon = ConnecttoDB(dbfile)
-        dbcon.execute("SELECT friendlyname FROM Chats WHERE name=\"" + Chatname + "\" LIMIT 1;")
         
-        
-        result = dbcon.fetchone()
+        dbcon = MakeConnection(dbfile, "SELECT friendlyname FROM Chats WHERE name= \"" + Chatname + "\" LIMIT 1")
+        row = dbcon.fetchone()
 
-        if result is None:
-            ChatCacheDictionary[Chatname] = "Unknown Chat" 
-
+        if row is None: #if no entry is found, the chat does not exist and thus labeled "Nonexistent Chat"
+            ChatCacheDictionary[Chatname] = "Nonexistent Chat"
         else:
-            ChatCacheDictionary[Chatname] = result
-
+            ChatCacheDictionary[Chatname] = str(row[0])
+            
         dbcon.close()        
     
-    FoundName = ChatCacheDictionary[Chatname][0]
+    FoundName = sub("[/]","",ChatCacheDictionary[Chatname]) #replace any characters which will cause a FileNotFoundError in the built in open function 
+    
     try:
-        return FoundName[FoundName.rindex("|"):FoundName.rindex(",")]
+        return FoundName[FoundName.rindex("|"):FoundName.rindex(",")+1] #Parses the chat name out
     
     except ValueError:
-        return FoundName
+        return FoundName #if above parsing is illegal, return the value without any modifications 
 
 def GetChatParticipants(Chatname, dbfile):
 
-    dbcon = ConnecttoDB(dbfile)
-    dbcon.execute("SELECT participants FROM Chats WHERE name=\"" + Chatname + "\" LIMIT 1;")
-
-    for row in dbcon:
-        return row[0]
+    dbcon = MakeConnection(dbfile, "SELECT participants FROM Chats WHERE name=\"" + Chatname + "\" LIMIT 1;")
+    row = dbcon.fetchone()
+    
+    dbcon.close()
+    return row[0] #returns participants 
